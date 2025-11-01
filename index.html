@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线算账统计工具</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+        }
+        
+        .card h2 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light);
+            display: flex;
+            align-items: center;
+        }
+        
+        .card h2 i {
+            margin-right: 10px;
+            font-size: 1.4em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        button i {
+            margin-right: 8px;
+        }
+        
+        button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+        }
+        
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .profit-positive {
+            color: var(--success);
+            font-weight: 600;
+        }
+        
+        .profit-negative {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .summary {
+            background: linear-gradient(135deg, #e8f4fc 0%, #d1e7f5 100%);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border: 1px solid rgba(52, 152, 219, 0.2);
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 16px;
+            padding: 8px 0;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        
+        .summary-total {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--dark);
+            border-top: 2px solid var(--primary);
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .product-row {
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .remove-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .remove-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .actions button {
+            flex: 1;
+        }
+        
+        .share-section {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .instructions {
+            background: rgba(243, 156, 18, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        
+        .instructions h3 {
+            color: var(--warning);
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        .github-link {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+        }
+        
+        .github-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .github-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-positive {
+            color: var(--success);
+        }
+        
+        .stat-negative {
+            color: var(--danger);
+        }
+        
+        .deployment-status {
+            background: rgba(46, 204, 113, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid var(--success);
+        }
+        
+        .pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calculator"></i> 在线算账统计工具</h1>
+            <p class="subtitle">轻松计算商品成本、利润和利润率 | 支持数据导出和分享</p>
+        </header>
+        
+        <div class="deployment-status">
+            <span class="pulse"></span>
+            <strong>GitHub Pages 在线部署就绪</strong> - 将此代码上传到GitHub仓库即可创建您的在线算账工具
+        </div>
+        
+        <div class="app-container">
+            <div>
+                <div class="card">
+                    <h2><i class="fas fa-plus-circle"></i> 添加商品</h2>
+                    <form id="productForm">
+                        <div class="form-group">
+                            <label for="productName"><i class="fas fa-tag"></i> 商品名称</label>
+                            <input type="text" id="productName" placeholder="输入商品名称" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="purchasePrice"><i class="fas fa-shopping-cart"></i> 采购价 (元)</label>
+                            <input type="number" id="purchasePrice" step="0.01" placeholder="0.00" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="intlShipping"><i class="fas fa-ship"></i> 国外运费 (元)</label>
+                            <input type="number" id="intlShipping" step="0.01" placeholder="0.00" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="domesticShipping"><i class="fas fa-truck"></i> 国内运费 (元)</label>
+                            <input type="number" id="domesticShipping" step="0.01" placeholder="0.00" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="otherCosts"><i class="fas fa-receipt"></i> 其他支出 (元)</label>
+                            <input type="number" id="otherCosts" step="0.01" placeholder="0.00" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="sellingPrice"><i class="fas fa-money-bill-wave"></i> 卖出价格 (元)</label>
+                            <input type="number" id="sellingPrice" step="0.01" placeholder="0.00" required>
+                        </div>
+                        
+                        <button type="submit" class="btn-success">
+                            <i class="fas fa-plus"></i> 添加商品
+                        </button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-cogs"></i> 数据操作</h2>
+                    <div class="actions">
+                        <button id="exportData" class="btn-success">
+                            <i class="fas fa-file-export"></i> 导出数据
+                        </button>
+                        <button id="importData" class="btn-warning">
+                            <i class="fas fa-file-import"></i> 导入数据
+                        </button>
+                    </div>
+                    <div class="actions">
+                        <button id="clearAll" class="btn-danger">
+                            <i class="fas fa-trash"></i> 清空全部
+                        </button>
+                    </div>
+                    
+                    <div class="share-section">
+                        <h3><i class="fas fa-share-alt"></i> 分享数据</h3>
+                        <p>生成分享链接发送给合作伙伴：</p>
+                        <button id="generateLink" class="btn-success">
+                            <i class="fas fa-link"></i> 生成分享链接
+                        </button>
+                        <div id="shareLinkContainer" style="display: none; margin-top: 15px;">
+                            <input type="text" id="shareLink" readonly style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                            <button id="copyLink" class="btn-success" style="margin-top: 10px;">
+                                <i class="fas fa-copy"></i> 复制链接
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-info-circle"></i> GitHub部署说明</h3>
+                    <ol>
+                        <li>将本页代码保存为 <strong>index.html</strong></li>
+                        <li>在GitHub创建新仓库</li>
+                        <li>上传index.html文件到仓库</li>
+                        <li>在仓库设置中启用GitHub Pages</li>
+                        <li>访问生成的网址使用在线工具</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div>
+                <div class="tabs">
+                    <div class="tab active" data-tab="products">商品列表</div>
+                    <div class="tab" data-tab="stats">数据统计</div>
+                </div>
+                
+                <div class="tab-content active" id="products-tab">
+                    <div class="card">
+                        <h2><i class="fas fa-list"></i> 商品列表</h2>
+                        <div id="productList">
+                            <div class="empty-state">
+                                <i class="fas fa-box-open"></i>
+                                <h3>暂无商品</h3>
+                                <p>请添加商品开始计算</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="stats-tab">
+                    <div class="card">
+                        <h2><i class="fas fa-chart-bar"></i> 数据统计</h2>
+                        <div class="stats-cards">
+                            <div class="stat-card">
+                                <div class="stat-label">商品总数</div>
+                                <div class="stat-value" id="totalProducts">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">盈利商品</div>
+                                <div class="stat-value stat-positive" id="profitableProducts">0</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">亏损商品</div>
+                                <div class="stat-value stat-negative" id="lossProducts">0</div>
+                            </div>
+                        </div>
+                        
+                        <div id="summary">
+                            <div class="empty-state">
+                                <i class="fas fa-chart-pie"></i>
+                                <h3>暂无数据</h3>
+                                <p>添加商品后查看统计信息</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="github-link">
+            <a href="https://github.com" target="_blank">
+                <i class="fab fa-github"></i> 在GitHub上创建您的在线算账工具
+            </a>
+        </div>
+        
+        <footer>
+            <p>© 2023 在线算账统计工具 | 专为跨境电商设计</p>
+        </footer>
+    </div>
+
+    <script>
+        // 商品数据存储
+        let products = JSON.parse(localStorage.getItem('products')) || [];
+
+        // DOM 元素
+        const productForm = document.getElementById('productForm');
+        const productList = document.getElementById('productList');
+        const summary = document.getElementById('summary');
+        const exportDataBtn = document.getElementById('exportData');
+        const importDataBtn = document.getElementById('importData');
+        const clearAllBtn = document.getElementById('clearAll');
+        const generateLinkBtn = document.getElementById('generateLink');
+        const copyLinkBtn = document.getElementById('copyLink');
+        const shareLinkContainer = document.getElementById('shareLinkContainer');
+        const shareLink = document.getElementById('shareLink');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const totalProductsEl = document.getElementById('totalProducts');
+        const profitableProductsEl = document.getElementById('profitableProducts');
+        const lossProductsEl = document.getElementById('lossProducts');
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProductList();
+            updateSummary();
+            setupTabs();
+            
+            // 检查URL中是否有共享数据
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedData = urlParams.get('sharedata');
+            
+            if (sharedData) {
+                try {
+                    const dataStr = decodeURIComponent(escape(atob(sharedData)));
+                    const importedProducts = JSON.parse(dataStr);
+                    
+                    if (confirm(`检测到共享数据，包含 ${importedProducts.length} 条商品记录。是否导入？`)) {
+                        products = importedProducts;
+                        saveToLocalStorage();
+                        renderProductList();
+                        updateSummary();
+                        
+                        // 清除URL参数，避免重复导入
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                } catch (error) {
+                    console.error('自动导入数据错误:', error);
+                }
+            }
+        });
+
+        // 设置标签页
+        function setupTabs() {
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // 更新活动标签
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // 显示对应内容
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === `${tabId}-tab`) {
+                            content.classList.add('active');
+                        }
+                    });
+                    
+                    // 如果是统计标签，更新统计数据
+                    if (tabId === 'stats') {
+                        updateStats();
+                    }
+                });
+            });
+        }
+
+        // 添加商品
+        productForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const product = {
+                id: Date.now(),
+                name: document.getElementById('productName').value,
+                purchasePrice: parseFloat(document.getElementById('purchasePrice').value) || 0,
+                intlShipping: parseFloat(document.getElementById('intlShipping').value) || 0,
+                domesticShipping: parseFloat(document.getElementById('domesticShipping').value) || 0,
+                otherCosts: parseFloat(document.getElementById('otherCosts').value) || 0,
+                sellingPrice: parseFloat(document.getElementById('sellingPrice').value) || 0
+            };
+            
+            products.push(product);
+            saveToLocalStorage();
+            renderProductList();
+            updateSummary();
+            
+            // 重置表单
+            productForm.reset();
+            document.getElementById('productName').focus();
+        });
+
+        // 导出数据
+        exportDataBtn.addEventListener('click', function() {
+            if (products.length === 0) {
+                alert('没有数据可导出');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(products, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `算账数据_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // 导入数据
+        importDataBtn.addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedProducts = JSON.parse(e.target.result);
+                        if (confirm(`确定要导入 ${importedProducts.length} 条商品记录吗？这将替换当前所有数据。`)) {
+                            products = importedProducts;
+                            saveToLocalStorage();
+                            renderProductList();
+                            updateSummary();
+                            alert('数据导入成功！');
+                        }
+                    } catch (error) {
+                        alert('文件格式错误，请选择正确的JSON文件');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        });
+
+        // 清空全部商品
+        clearAllBtn.addEventListener('click', function() {
+            if (confirm('确定要清空所有商品数据吗？此操作不可撤销。')) {
+                products = [];
+                saveToLocalStorage();
+                renderProductList();
+                updateSummary();
+            }
+        });
+
+        // 生成分享链接
+        generateLinkBtn.addEventListener('click', function() {
+            if (products.length === 0) {
+                alert('请先添加商品数据再生成分享链接');
+                return;
+            }
+            
+            // 将数据编码为Base64
+            const dataStr = JSON.stringify(products);
+            const encodedData = btoa(unescape(encodeURIComponent(dataStr)));
+            
+            // 生成分享链接
+            const currentUrl = window.location.href.split('?')[0];
+            const shareUrl = `${currentUrl}?sharedata=${encodedData}`;
+            
+            shareLink.value = shareUrl;
+            shareLinkContainer.style.display = 'block';
+        });
+
+        // 复制链接
+        copyLinkBtn.addEventListener('click', function() {
+            shareLink.select();
+            document.execCommand('copy');
+            alert('链接已复制到剪贴板！');
+        });
+
+        // 渲染商品列表
+        function renderProductList() {
+            if (products.length === 0) {
+                productList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-box-open"></i>
+                        <h3>暂无商品</h3>
+                        <p>请添加商品开始计算</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '<table><thead><tr><th>商品名称</th><th>总成本</th><th>卖出价</th><th>利润</th><th>利润率</th><th>操作</th></tr></thead><tbody>';
+            
+            products.forEach(product => {
+                const totalCost = product.purchasePrice + product.intlShipping + product.domesticShipping + product.otherCosts;
+                const profit = product.sellingPrice - totalCost;
+                const profitRate = totalCost > 0 ? (profit / totalCost * 100).toFixed(2) : 0;
+                
+                const profitClass = profit >= 0 ? 'profit-positive' : 'profit-negative';
+                
+                html += `
+                    <tr class="product-row">
+                        <td>${product.name}</td>
+                        <td>¥${totalCost.toFixed(2)}</td>
+                        <td>¥${product.sellingPrice.toFixed(2)}</td>
+                        <td class="${profitClass}">¥${profit.toFixed(2)}</td>
+                        <td class="${profitClass}">${profitRate}%</td>
+                        <td>
+                            <button class="remove-btn" onclick="removeProduct(${product.id})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            productList.innerHTML = html;
+        }
+
+        // 更新汇总统计
+        function updateSummary() {
+            if (products.length === 0) {
+                summary.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-pie"></i>
+                        <h3>暂无数据</h3>
+                        <p>添加商品后查看统计信息</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let totalPurchasePrice = 0;
+            let totalIntlShipping = 0;
+            let totalDomesticShipping = 0;
+            let totalOtherCosts = 0;
+            let totalSellingPrice = 0;
+            let totalProfit = 0;
+            
+            products.forEach(product => {
+                totalPurchasePrice += product.purchasePrice;
+                totalIntlShipping += product.intlShipping;
+                totalDomesticShipping += product.domesticShipping;
+                totalOtherCosts += product.otherCosts;
+                totalSellingPrice += product.sellingPrice;
+                
+                const totalCost = product.purchasePrice + product.intlShipping + product.domesticShipping + product.otherCosts;
+                totalProfit += (product.sellingPrice - totalCost);
+            });
+            
+            const totalCost = totalPurchasePrice + totalIntlShipping + totalDomesticShipping + totalOtherCosts;
+            const totalProfitRate = totalCost > 0 ? (totalProfit / totalCost * 100).toFixed(2) : 0;
+            const profitClass = totalProfit >= 0 ? 'profit-positive' : 'profit-negative';
+            
+            let html = `
+                <div class="summary">
+                    <div class="summary-item">
+                        <span>总采购成本:</span>
+                        <span>¥${totalPurchasePrice.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>总国外运费:</span>
+                        <span>¥${totalIntlShipping.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>总国内运费:</span>
+                        <span>¥${totalDomesticShipping.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>总其他支出:</span>
+                        <span>¥${totalOtherCosts.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>总成本:</span>
+                        <span>¥${totalCost.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>总卖出价格:</span>
+                        <span>¥${totalSellingPrice.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item summary-total ${profitClass}">
+                        <span>总利润:</span>
+                        <span>¥${totalProfit.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-item ${profitClass}">
+                        <span>总利润率:</span>
+                        <span>${totalProfitRate}%</span>
+                    </div>
+                </div>
+            `;
+            
+            summary.innerHTML = html;
+        }
+
+        // 更新统计数据
+        function updateStats() {
+            totalProductsEl.textContent = products.length;
+            
+            let profitableCount = 0;
+            let lossCount = 0;
+            
+            products.forEach(product => {
+                const totalCost = product.purchasePrice + product.intlShipping + product.domesticShipping + product.otherCosts;
+                const profit = product.sellingPrice - totalCost;
+                
+                if (profit >= 0) {
+                    profitableCount++;
+                } else {
+                    lossCount++;
+                }
+            });
+            
+            profitableProductsEl.textContent = profitableCount;
+            lossProductsEl.textContent = lossCount;
+        }
+
+        // 删除商品
+        function removeProduct(id) {
+            products = products.filter(product => product.id !== id);
+            saveToLocalStorage();
+            renderProductList();
+            updateSummary();
+        }
+
+        // 保存到本地存储
+        function saveToLocalStorage() {
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+    </script>
+</body>
+</html>
